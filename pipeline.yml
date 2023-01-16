@@ -33,7 +33,6 @@ stages:
       inputs:
         command: publish
         projects: ./src/DemoApp/DemoApp.csproj
-        publishWebProjects: True
         arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/app'
         zipAfterPublish: True
     - task: CopyFiles@2
