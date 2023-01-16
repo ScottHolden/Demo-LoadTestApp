@@ -56,6 +56,8 @@ stages:
       runOnce:
         deploy:
           steps:
+          - download: current
+            artifact: BuildArtifact
           - task: AzureCLI@2
             inputs:
               azureSubscription: $(azureServiceConnectionName)
@@ -63,8 +65,6 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: 'az group create -l $(location) -n $(rgName)'
               failOnStandardError: true
-          - download: current
-            artifact: $(artifactName)
           - task: AzureCLI@2
             name: templateDeploy
             inputs:
