@@ -38,7 +38,8 @@ stages:
         zipAfterPublish: True
     - task: CopyFiles@2
       inputs:
-        Contents: './test/loadtest'
+        SourceFolder: './test/loadtest'
+        Contents: '**'
         TargetFolder: '$(Build.ArtifactStagingDirectory)/test'
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: BuildArtifact
@@ -50,7 +51,7 @@ stages:
     environment: 'Demo-LoadTestApp'
     variables:
       templatePath: '$(Pipeline.Workspace)/$(artifactName)/deploy/deploy.json'
-      appZipPath: '$(Pipeline.Workspace)/$(artifactName)/app/huh.zip'
+      appZipPath: '$(Pipeline.Workspace)/$(artifactName)/app/DemoApp.zip'
     strategy: 
       runOnce:
         deploy:
