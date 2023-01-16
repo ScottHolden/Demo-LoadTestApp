@@ -61,6 +61,13 @@ resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
       tenantId: msi.properties.tenantId
     }
   }
+  resource allowedIps 'firewallRules@2021-08-01-preview' = {
+    name: 'AllowAllWindowsAzureIps'
+    properties: {
+      endIpAddress: '0.0.0.0'
+      startIpAddress: '0.0.0.0'
+    }
+  }
 }
 
 resource sqlDb 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
