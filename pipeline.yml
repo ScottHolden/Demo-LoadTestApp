@@ -12,7 +12,7 @@ variables:
 stages:
 - stage: Build
   jobs:
-  - job: Build Bicep
+  - job: BuildDemo
     steps:
     - script: mkdir -p $(Build.ArtifactStagingDirectory)/{deploy,app,test}
     - task: AzureCLI@2
@@ -44,7 +44,7 @@ stages:
 - stage: Deploy
   dependsOn: Build
   jobs:
-  - deployment: 'Deploy Demo-LoadTestApp'
+  - deployment: 'DeployDemo'
     environment: 'Demo-LoadTestApp'
     variables:
       templatePath: '$(Pipeline.Workspace)/$(artifactName)/deploy/deploy.json'
