@@ -73,7 +73,7 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 az deployment group create -g $(rgName) -f ${{ variables.templatePath }} > deployment.json
-                cat deployment.json
+                jq '{name, resourceGroup, provisioningState: .properties.provisioningState, duration: .properties.duration, error: .properties.error, outputs: .properties.outputs | to_entries | map({key:.key,value:.value.value}) | from_entries}' deployment.json
                 jq '.properties.outputs | to_entries[] | "##vso[task.setvariable variable=\(.key);isOutput=true]\(.value.value)"' deployment.json | xargs -n 1 echo
               failOnStandardError: true
           - task: AzureCLI@2
@@ -82,4 +82,3 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: 'az functionapp deployment source config-zip -g $(rgName) -n $(templateDeploy.functionAppName) --src ${{ variables.appZipPath }}'
-              failOnStandardError: true
