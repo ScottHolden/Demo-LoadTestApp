@@ -29,6 +29,18 @@ public class BookService
 		return book;
 	}
 
+	public async Task EnsureMinimumBooks()
+	{
+		int expected = 500;
+		int count = await _booksDb.Books.CountAsync();
+		int toAdd = expected - count;
+		if (toAdd > 0)
+		{
+			_logger.LogWarning("Adding {ToAdd} books as it is below {Expected}", toAdd, expected);
+			await AddRandomBooksAsync(toAdd);
+		}
+	}
+
 	public async Task AddRandomBooksAsync(int count)
 	{
 		for (int i = 0; i < count; i++)

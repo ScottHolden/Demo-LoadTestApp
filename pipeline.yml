@@ -1,0 +1,82 @@
+trigger:
+- main
+    
+pool:
+  name: 'Azure Pipelines'
+
+variables:
+  azureServiceConnectionName: 'ScottDemoAzure'
+  rgName: 'Demo-LoadTestApp2'
+  location: 'AustraliaEast'
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build Bicep
+    steps:
+    - script: mkdir -p $(Build.ArtifactStagingDirectory)/{deploy,app,test}
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureServiceConnectionName)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az bicep build -f ./deploy/deploy.bicep --outfile $(Build.ArtifactStagingDirectory)/deploy/deploy.json'
+        failOnStandardError: true
+    - task: UseDotNet@2
+      inputs:
+        version: '7.x'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'restore'
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: publish
+        publishWebProjects: True
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/app'
+        zipAfterPublish: True
+    - task: CopyFiles@2
+      inputs:
+        Contents: './test/loadtest'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/test'
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: BuildArtifact
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - deployment: 'Deploy Demo-LoadTestApp'
+    environment: 'Demo-LoadTestApp'
+    variables:
+      templatePath: '$(Pipeline.Workspace)/$(artifactName)/deploy/deploy.json'
+      appZipPath: '$(Pipeline.Workspace)/$(artifactName)/app/huh.zip'
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureServiceConnectionName)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az group create -l $(location) -n $(rgName)'
+              failOnStandardError: true
+          - download: current
+            artifact: $(artifactName)
+          - task: AzureCLI@2
+            name: templateDeploy
+            inputs:
+              azureSubscription: $(azureServiceConnectionName)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az deployment group create -g $(rgName) -f ${{ variables.templatePath }} > deployment.json
+                cat deployment.json
+                jq '.properties.outputs | to_entries[] | "##vso[task.setvariable variable=\(.key);isOutput=true]\(.value.value)"' deployment.json | xargs -n 1 echo
+              failOnStandardError: true
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureServiceConnectionName)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az functionapp deployment source config-zip -g $(rgName) -n $(templateDeploy.functionAppName) --src ${{ variables.appZipPath }}'
+              failOnStandardError: true
