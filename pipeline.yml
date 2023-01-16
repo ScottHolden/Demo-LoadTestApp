@@ -50,8 +50,8 @@ stages:
   - deployment: 'DeployDemo'
     environment: 'Demo-LoadTestApp'
     variables:
-      templatePath: '$(Pipeline.Workspace)/$(artifactName)/deploy/deploy.json'
-      appZipPath: '$(Pipeline.Workspace)/$(artifactName)/app/DemoApp.zip'
+      templatePath: '$(Pipeline.Workspace)/BuildArtifact/deploy/deploy.json'
+      appZipPath: '$(Pipeline.Workspace)/BuildArtifact/app/DemoApp.zip'
     strategy: 
       runOnce:
         deploy:
