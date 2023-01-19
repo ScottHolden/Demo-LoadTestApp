@@ -48,5 +48,5 @@ Compress-Archive -Path (Join-Path $functionStaging "*") -DestinationPath $functi
 
 Remove-Item -Path $functionStaging -Recurse -ErrorAction Stop | Out-Null
 
-Write-Host "Template at: $template"
-Write-Host "Function at: $functionZip"
+Write-Host "Template at: $template ($((Get-Item $template).length/1KB))"
+Write-Host "Function at: $functionZip ($((Get-Item $functionZip).length/1KB))"

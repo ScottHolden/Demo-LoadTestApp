@@ -1,6 +1,6 @@
 param prefix string = 'LoadTestApp'
 param location string = resourceGroup().location
-param zipDeploy string = ''
+param zipDeploy string = 'https://github.com/ScottHolden/Demo-LoadTestApp/blob/main/.artifacts/function.zip?raw=true'
 
 module deploy 'deploy.bicep' = {
   name: '${deployment().name}-deploy'

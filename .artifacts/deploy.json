@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "15994745784443838165"
+      "templateHash": "4898354869178842941"
     }
   },
   "parameters": {
@@ -19,7 +19,7 @@
     },
     "zipDeploy": {
       "type": "string",
-      "defaultValue": ""
+      "defaultValue": "https://github.com/ScottHolden/Demo-LoadTestApp/blob/main/.artifacts/function.zip?raw=true"
     }
   },
   "resources": [
