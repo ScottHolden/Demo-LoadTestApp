@@ -5,8 +5,282 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "3208761235556063943"
+      "templateHash": "15994745784443838165"
     }
   },
-  "resources": []
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "defaultValue": "LoadTestApp"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "zipDeploy": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[format('{0}-deploy', deployment().name)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "prefix": {
+            "value": "[parameters('prefix')]"
+          },
+          "zipDeploy": {
+            "value": "[parameters('zipDeploy')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.13.1.58284",
+              "templateHash": "15883735559676204303"
+            }
+          },
+          "parameters": {
+            "prefix": {
+              "type": "string",
+              "defaultValue": "LoadTestApp"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "zipDeploy": {
+              "type": "string",
+              "defaultValue": "https://github.com/ScottHolden/Demo-LoadTestApp/blob/main/.artifacts/function.zip?raw=true"
+            }
+          },
+          "variables": {
+            "uniqueName": "[format('{0}{1}', parameters('prefix'), uniqueString(parameters('prefix'), resourceGroup().id))]",
+            "dbName": "BooksDB"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Sql/servers/firewallRules",
+              "apiVersion": "2021-08-01-preview",
+              "name": "[format('{0}/{1}', toLower(variables('uniqueName')), 'AllowAllWindowsAzureIps')]",
+              "properties": {
+                "endIpAddress": "0.0.0.0",
+                "startIpAddress": "0.0.0.0"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', toLower(variables('uniqueName')))]"
+              ]
+            },
+            {
+              "condition": "[not(empty(trim(parameters('zipDeploy'))))]",
+              "type": "Microsoft.Web/sites/extensions",
+              "apiVersion": "2021-03-01",
+              "name": "[format('{0}/{1}', variables('uniqueName'), 'MSDeploy')]",
+              "properties": {
+                "packageUri": "[parameters('zipDeploy')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('uniqueName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]",
+              "properties": {}
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('uniqueName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('uniqueName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-03-01",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "EP1",
+                "tier": "ElasticPremium",
+                "family": "EP"
+              },
+              "kind": "elastic",
+              "properties": {
+                "maximumElasticWorkerCount": 20
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2022-09-01",
+              "name": "[toLower(variables('uniqueName'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2"
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2022-01-31-preview",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Sql/servers",
+              "apiVersion": "2022-05-01-preview",
+              "name": "[toLower(variables('uniqueName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "administrators": {
+                  "administratorType": "ActiveDirectory",
+                  "azureADOnlyAuthentication": true,
+                  "principalType": "Application",
+                  "login": "[variables('uniqueName')]",
+                  "sid": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName')), '2022-01-31-preview').clientId]",
+                  "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName')), '2022-01-31-preview').tenantId]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Sql/servers/databases",
+              "apiVersion": "2022-05-01-preview",
+              "name": "[format('{0}/{1}', toLower(variables('uniqueName')), variables('dbName'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard",
+                "tier": "Standard",
+                "capacity": 10
+              },
+              "properties": {
+                "requestedBackupStorageRedundancy": "Local"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', toLower(variables('uniqueName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('uniqueName'))]",
+                "siteConfig": {
+                  "connectionStrings": [
+                    {
+                      "name": "SqlDb",
+                      "connectionString": "[format('Data Source={0}; Initial Catalog={1}; Authentication=Active Directory Managed Identity; Encrypt=True; User Id={2}', reference(resourceId('Microsoft.Sql/servers', toLower(variables('uniqueName'))), '2022-05-01-preview').fullyQualifiedDomainName, variables('dbName'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName')), '2022-01-31-preview').clientId)]",
+                      "type": "SQLAzure"
+                    }
+                  ],
+                  "appSettings": [
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', variables('uniqueName')), '2020-02-02').InstrumentationKey]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[reference(resourceId('Microsoft.Insights/components', variables('uniqueName')), '2020-02-02').ConnectionString]"
+                    },
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', toLower(variables('uniqueName')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(variables('uniqueName'))), '2022-09-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                      "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', toLower(variables('uniqueName')), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(variables('uniqueName'))), '2022-09-01').keys[0].value)]"
+                    },
+                    {
+                      "name": "WEBSITE_CONTENTSHARE",
+                      "value": "[toLower(variables('uniqueName'))]"
+                    },
+                    {
+                      "name": "WEBSITE_RUN_FROM_PACKAGE",
+                      "value": "1"
+                    },
+                    {
+                      "name": "FUNCTIONS_EXTENSION_VERSION",
+                      "value": "~4"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "dotnet-isolated"
+                    }
+                  ]
+                }
+              },
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName')))]": {}
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', variables('uniqueName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('uniqueName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uniqueName'))]",
+                "[resourceId('Microsoft.Sql/servers/databases', toLower(variables('uniqueName')), variables('dbName'))]",
+                "[resourceId('Microsoft.Sql/servers', toLower(variables('uniqueName')))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', toLower(variables('uniqueName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.LoadTestService/loadTests",
+              "apiVersion": "2022-12-01",
+              "name": "[variables('uniqueName')]",
+              "location": "[parameters('location')]",
+              "properties": {}
+            }
+          ],
+          "outputs": {
+            "loadTestName": {
+              "type": "string",
+              "value": "[variables('uniqueName')]"
+            },
+            "functionAppName": {
+              "type": "string",
+              "value": "[variables('uniqueName')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-deploy', deployment().name)), '2020-10-01').outputs.functionAppName.value]"
+    },
+    "loadTestName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}-deploy', deployment().name)), '2020-10-01').outputs.loadTestName.value]"
+    }
+  }
 }
