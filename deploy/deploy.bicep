@@ -1,6 +1,6 @@
 param prefix string = 'LoadTestApp'
 param location string = resourceGroup().location
-param zipDeploy string = ''
+param zipDeploy string = 'https://github.com/ScottHolden/Demo-LoadTestApp/blob/main/.artifacts/function.zip?raw=true'
 
 var uniqueName = '${prefix}${uniqueString(prefix, resourceGroup().id)}'
 var dbName = 'BooksDB'
@@ -139,6 +139,12 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
     type: 'UserAssigned'
     userAssignedIdentities: {
       '${msi.id}': {}
+    }
+  }
+  resource ZipDeploy 'extensions@2021-03-01' = if (!empty(trim(zipDeploy))) {
+    name: 'MSDeploy'
+    properties: {
+      packageUri: zipDeploy
     }
   }
 }
