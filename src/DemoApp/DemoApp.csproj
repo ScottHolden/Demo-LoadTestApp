@@ -7,8 +7,6 @@
     <Nullable>enable</Nullable>
     <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>partial</TrimMode>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
