@@ -1,5 +1,6 @@
 param prefix string = 'LoadTestApp'
 param location string = resourceGroup().location
+param zipDeploy string = ''
 
 var uniqueName = '${prefix}${uniqueString(prefix, resourceGroup().id)}'
 var dbName = 'BooksDB'
